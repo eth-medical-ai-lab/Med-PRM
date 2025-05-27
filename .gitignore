@@ -1,0 +1,112 @@
+# Ignore data files
+*.npy
+*.json
+
+# Ignore output and log directories
+baselines/*/output/
+baselines/*/logs/
+logs/**
+output/**
+
+# Ignore Python bytecode and C extensions
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Ignore build and distribution directories
+.Python
+build/
+dist/
+.eggs/
+lib/
+lib64/
+sdist/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Ignore PyInstaller files
+*.manifest
+*.spec
+
+# Ignore installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Ignore test and coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage*
+.cache
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# Ignore translation files
+*.mo
+*.pot
+
+# Ignore database and local settings
+*.log
+local_settings.py
+db.sqlite3*
+
+# Ignore Flask and Scrapy directories
+instance/
+.webassets-cache
+.scrapy
+
+# Ignore documentation build directories
+docs/_build/
+
+# Ignore PyBuilder and Jupyter Notebook files
+.pybuilder/
+target/
+.ipynb_checkpoints
+
+# Ignore IPython and pdm files
+profile_default/
+ipython_config.py
+.pdm.toml
+.pdm-python
+.pdm-build/
+
+# Ignore PEP 582 and Celery files
+__pypackages__/
+celerybeat-schedule
+celerybeat.pid
+
+# Ignore SageMath and environment directories
+*.sage.py
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Ignore project settings
+.spyderproject
+.spyproject
+.ropeproject
+
+# Ignore mkdocs and mypy files
+/site
+.mypy_cache/
+.dmypy.json
+
+# Ignore Pyre and pytype files
+.pyre/
+.pytype/
+
+# Ignore Cython debug symbols
+cython_debug/
+
+# Ignore Milvus directories
+retrieval/corpus/
+retrieval/volumes/
