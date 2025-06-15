@@ -3,8 +3,8 @@
 *.json
 
 # Ignore output and log directories
-baselines/*/output/
 baselines/*/logs/
+baselines/*/output/
 logs/**
 output/**
 
@@ -16,6 +16,7 @@ __pycache__/
 
 # Ignore build and distribution directories
 .Python
+MANIFEST
 build/
 dist/
 .eggs/
@@ -26,54 +27,52 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
-MANIFEST
 
 # Ignore PyInstaller files
 *.manifest
 *.spec
 
 # Ignore installer logs
-pip-log.txt
 pip-delete-this-directory.txt
+pip-log.txt
 
 # Ignore test and coverage reports
-htmlcov/
-.tox/
-.nox/
 .coverage*
 .cache
-*.cover
 .hypothesis/
 .pytest_cache/
+.tox/
+.nox/
+*.cover
+htmlcov/
 
 # Ignore translation files
 *.mo
 *.pot
 
 # Ignore database and local settings
-*.log
-local_settings.py
 db.sqlite3*
+local_settings.py
 
 # Ignore Flask and Scrapy directories
-instance/
 .webassets-cache
 .scrapy
+instance/
 
 # Ignore documentation build directories
 docs/_build/
 
 # Ignore PyBuilder and Jupyter Notebook files
+.ipynb_checkpoints
 .pybuilder/
 target/
-.ipynb_checkpoints
 
 # Ignore IPython and pdm files
-profile_default/
-ipython_config.py
-.pdm.toml
 .pdm-python
 .pdm-build/
+.pdm.toml
+ipython_config.py
+profile_default/
 
 # Ignore PEP 582 and Celery files
 __pypackages__/
@@ -85,20 +84,20 @@ celerybeat.pid
 .env
 .venv
 env/
-venv/
-ENV/
 env.bak/
+venv/
 venv.bak/
+ENV/
 
 # Ignore project settings
+.ropeproject
 .spyderproject
 .spyproject
-.ropeproject
 
 # Ignore mkdocs and mypy files
-/site
-.mypy_cache/
 .dmypy.json
+.mypy_cache/
+/site
 
 # Ignore Pyre and pytype files
 .pyre/
@@ -110,3 +109,41 @@ cython_debug/
 # Ignore Milvus directories
 retrieval/corpus/
 retrieval/volumes/
+
+# Ignore environment variable files
+.env
+
+# Ignore wandb files
+wandb/
+**/wandb/
+shell/wandb/
+
+# Ignore Jupyter Notebook files
+*.ipynb
+
+# Ignore model and data files
+model/
+*.pem
+
+# Ignore Python related files
+develop-eggs/
+downloads/
+eggs/
+parts/
+var/
+
+# Ignore virtual environments
+env/
+
+# Ignore editor related files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Ignore retriever files
+retriever/
+
+# Ignore model training files
+/model_train/*
+!/model_train/.gitkeep
