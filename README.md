@@ -6,9 +6,12 @@
 
 
 <p align="center">
-  <a href="https://arxiv.org/pdf/2506.11474" target="_blank"><img src="https://img.shields.io/badge/arXiv-2506.06091-red"></a>
-  <a href="https://med-prm.github.io/" target="_blank"><img src="https://img.shields.io/badge/Project-Page-brightgreen"></a>
-<a href="https://huggingface.co/collections/dmis-lab/med-prm-68368afdaffae1c74f3ea064" target="_blank"><img src="https://img.shields.io/badge/Med--PRM-Collection-orange"></a>
+  <a href="https://arxiv.org/abs/2506.11474" target="_blank"><img src="https://img.shields.io/badge/arXiv-2506.11474-red"></a>
+  <a href="https://med-prm.github.io/" target="_blank"><img src="https://img.shields.io/badge/Project-Page-blue"></a>
+  <a href="https://huggingface.co/dmis-lab/llama-3.1-medprm-reward-v1.0" target="_blank"><img src="https://img.shields.io/badge/Hugging%20Face%20-%F0%9F%A4%97%20Model-orange"></a>
+  <a href="https://huggingface.co/datasets/dmis-lab/llama-3.1-medprm-reward-training-set" target="_blank"><img src="https://img.shields.io/badge/Hugging%20Face%20-%F0%9F%A4%97%20Dataset-orange"></a>
+  <a href="https://github.com/eth-medical-ai-lab/Med-PRM" target="_blank"><img src="https://img.shields.io/badge/Code-GitHub-brightgreen"></a>
+</p>
 
 
 ### News
@@ -31,7 +34,7 @@
 | Policy Model       | Reward Model       | Policy Base Model | Reward Base Model | Policy Training Method | Reward Training Method | MedQA-4 |
 |--------------------|--------------------|-------------------|-------------------|------------------------|------------------------|---------|
 | Med PRM Policy v1.0 | Med PRM Reward v1.0 | Llama 3.1 8B IT | Llama 3.1 8B IT | Rejection Sampling | SFT | 79.18 |
-| Llama-3.1-8B-UltraMedical | Med PRM Reward v1.0 | Llama 3.0 8B IT | Llama 3.1 8B IT | SFT | SFT | 79.87 |
+| Llama-3.1-8B-UltraMedical | Med PRM Reward v1.1 | Llama 3.0 8B IT | Llama 3.1 8B IT | SFT | SFT | 79.87 |
 | llama-3-meerkat-8b-v1.0 | Med PRM Reward v1.0 | Llama 3.0 8B IT | Llama 3.1 8B IT | SFT | SFT | 80.35 |
 
 ## 🔄 Experiment
