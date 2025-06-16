@@ -6,17 +6,13 @@
 
 
 <p align="center">
-    <a href="https://arxiv.org/pdf/"><img alt="Paper" src="https://img.shields.io/badge/Paper-arxiv-blue"></a>
-    <a href="https://med-prm.github.io/"><img alt="Website" src="https://img.shields.io/badge/Website-online-brightgreen"></a>
-    <a href="https://github.com/eth-medical-ai-lab/Med-PRM"><img alt="Code" src="https://img.shields.io/badge/Code-GitHub-blue"></a>
-    <a href="https://med-prm.github.io/#citation-ref"><img alt="Citation" src="https://img.shields.io/badge/Citation-reference-yellow"></a>
-    <a href="https://huggingface.co/dmis-lab/llama-3.1-medprm-reward-v1.0"><img alt="Reward Model" src="https://img.shields.io/badge/Reward%20Model-Hugging%20Face-orange"></a>
-</p>
-
+  <a href="https://arxiv.org/pdf/2506.11474" target="_blank"><img src="https://img.shields.io/badge/arXiv-2506.06091-red"></a>
+  <a href="https://med-prm.github.io/" target="_blank"><img src="https://img.shields.io/badge/Project-Page-brightgreen"></a>
+  <a href="https://huggingface.co/collections/dmis-lab/med-prm-68368afdaffae1c74f3ea064" target="_blank"><img src="https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Dataset-orange"></a>
 
 ### News
 
-* [June/16/2025] 📰 **Med-PRM** preprint is now available on [arXiv](https://arxiv.org/pdf/).
+* [June/15/2025] 📰 **Med-PRM** preprint is now available on [arXiv](https://arxiv.org/pdf/2506.11474).
 * [May/19/2025] 📈 **Med-PRM** is the first 8B framework to achieve over 80% accuracy on MedQA.
 * [May/19/2025] 🎉 🎊 🎉 We are thrilled to announce the first launch of **Med-PRM**, a medical process reward model first to augment retrieval.
 
@@ -38,7 +34,7 @@
 | Llama-3.1-8B-UltraMedical | Med PRM Reward v1.0 | Llama 3.0 8B IT | Llama 3.1 8B IT | SFT | SFT | 79.87 |
 | llama-3-meerkat-8b-v1.0 | Med PRM Reward v1.0 | Llama 3.0 8B IT | Llama 3.1 8B IT | SFT | SFT | 80.35 |
 
-## 🖥️ Installation
+## 🔄 Experiment
 
 1. **Prepare Data**: Execute the data preparation script:
 
@@ -60,7 +56,7 @@
 
 
 
-### Contact
+## Contact
 Feel free to reach out to jhyun0414@hanyang.ac.kr or jisohn@ethz.ch
 
 
