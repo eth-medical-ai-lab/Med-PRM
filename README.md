@@ -64,11 +64,14 @@ Feel free to reach out to jhyun0414@hanyang.ac.kr or jisohn@ethz.ch
 
    ```bibtex
    @misc{medprm2025,
-     title={Med-PRM: Medical Reasoning Models with Step-wise Guideline-verified Process Rewards},
+     title={Med-PRM: Medical Reasoning Models with Stepwise, Guideline-verified Process Rewards}, 
      author={Jaehoon Yun and Jiwoong Sohn and Jungwoo Park and Hyunjae Kim and Xiangru Tang and Daniel Shao and Yong Hoe Koo and Ko Minhyeok and Qingyu Chen and Mark Gerstein and Michael Moor and Jaewoo Kang},
+     author+an = {1=first; 2=first; 3=first; 11=last; 12=last},
      year={2025},
-     month={May},
-     url={}
+     url={https://med-prm.github.io/},
+     eprint={2506.11474},
+     archivePrefix={arXiv},
+     primaryClass={cs.CL}
    }
    ```
 
