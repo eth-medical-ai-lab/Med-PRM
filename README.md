@@ -8,8 +8,8 @@
 <p align="center">
   <a href="https://arxiv.org/abs/2506.11474" target="_blank"><img src="https://img.shields.io/badge/arXiv-2506.11474-red"></a>
   <a href="https://med-prm.github.io/" target="_blank"><img src="https://img.shields.io/badge/Project-Page-blue"></a>
-  <a href="https://huggingface.co/dmis-lab/llama-3.1-medprm-reward-v1.0" target="_blank"><img src="https://img.shields.io/badge/Hugging%20Face%20-%F0%9F%A4%97%20Model-orange"></a>
-  <a href="https://huggingface.co/datasets/dmis-lab/llama-3.1-medprm-reward-training-set" target="_blank"><img src="https://img.shields.io/badge/Hugging%20Face%20-%F0%9F%A4%97%20Dataset-orange"></a>
+  <a href="https://huggingface.co/dmis-lab/llama-3.1-medprm-reward-v1.0" target="_blank"><img src="https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face%20-Model-orange"></a>
+  <a href="https://huggingface.co/datasets/dmis-lab/llama-3.1-medprm-reward-training-set" target="_blank"><img src="https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face%20-Dataset-orange"></a>
   <a href="https://github.com/eth-medical-ai-lab/Med-PRM" target="_blank"><img src="https://img.shields.io/badge/Code-GitHub-brightgreen"></a>
 </p>
 
