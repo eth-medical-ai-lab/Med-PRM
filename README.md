@@ -14,8 +14,7 @@
 ### News
 
 * [June/15/2025] 📰 **Med-PRM** preprint is now available on [arXiv](https://arxiv.org/pdf/2506.11474).
-* [May/19/2025] 📈 **Med-PRM** is the first 8B framework to achieve over 80% accuracy on MedQA.
-* [May/19/2025] 🎉 🎊 🎉 We are thrilled to announce the first launch of **Med-PRM**, a medical process reward model first to augment retrieval.
+* [June/15/2025] 🎉 We’re excited to present **Med-PRM** — a new medical process reward model that augments retrieval and is the first 8B-parameter framework to exceed **80% accuracy on MedQA**.
 
 
 ## 📖 Overview
