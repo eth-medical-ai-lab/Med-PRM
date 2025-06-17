@@ -33,6 +33,7 @@
 
 | Policy Model       | Reward Model       | Policy Base Model | Reward Base Model | Policy Training Method | Reward Training Method | MedQA-4 |
 |--------------------|--------------------|-------------------|-------------------|------------------------|------------------------|---------|
+| Llama-3.1-8B-Instruct       | Med PRM Reward v1.0 | Llama 3.1 8B IT    | Llama 3.1 8B IT    | -                       | SFT                     | 78.24   |
 | Med PRM Policy v1.0 | Med PRM Reward v1.0 | Llama 3.1 8B IT | Llama 3.1 8B IT | Rejection Sampling | SFT | 79.18 |
 | Llama-3.1-8B-UltraMedical | Med PRM Reward v1.1 | Llama 3.0 8B IT | Llama 3.1 8B IT | SFT | SFT | 79.87 |
 | llama-3-meerkat-8b-v1.0 | Med PRM Reward v1.0 | Llama 3.0 8B IT | Llama 3.1 8B IT | SFT | SFT | 80.35 |
@@ -45,7 +46,7 @@
    python python/0_preparing.py
    ```
 
-2. **Score with PRM**: Run a quick test for Med-PRM:
+2. **Score with PRM**: Run a quick test for Med-PRM (test set was sampled by Llama-3.1-8B-Instruct):
 
    ```bash
    bash scripts/4_scoring_PRM.sh
