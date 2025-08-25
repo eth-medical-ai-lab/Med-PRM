@@ -2,7 +2,7 @@
   <img src="media/med-prm-logo-full-clear.png" alt="medprm" style="width: 600px;">
 </p>
 
-# Med-PRM: Medical Reasoning Models with Step-wise Guideline-verified Process Rewards
+# [EMNLP 2025] Med-PRM: Medical Reasoning Models with Step-wise Guideline-verified Process Rewards
 
 
 <p align="center">
