@@ -15,8 +15,8 @@
 
 
 ### News
-
-* [August/20/2025] 🎉 **Med-PRM** is accepted to [EMNLP 2025](https://2025.emnlp.org/)! Congrats to all the authors!
+* [September/15/2025] 🎉 **Med-PRM** has been selected as an **Oral Presentation** at EMNLP 2025! 🙌 See you in Suzhou!
+* [August/20/2025] 🎉 **Med-PRM** is accepted to **[EMNLP 2025](https://2025.emnlp.org/)**! Congrats to all the authors!
 * [June/15/2025] 📰 **Med-PRM** preprint is now available on [arXiv](https://arxiv.org/pdf/2506.11474).
 * [June/15/2025] 🎉 We’re excited to present **Med-PRM** — a new medical process reward model that augments retrieval and is the first 8B-parameter framework to exceed **80% accuracy on MedQA**.
 
