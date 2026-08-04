@@ -11,17 +11,17 @@ from tqdm import tqdm
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from huggingface_hub import login
-import accelerate  # 기존 스크립트에 있던 import 유지
+import accelerate  # Retained from the original script.
 from collections import Counter
 # ----------------------------------------------------------------------
-# 1. 인자 파서
+# 1. Argument parser
 # ----------------------------------------------------------------------
 def parse_args():
     parser = argparse.ArgumentParser(
         description="Run PRM evaluation (RAG on/off selectable)."
     )
 
-    # 모델 관련
+    # Model settings
     parser.add_argument("--model_save_path", type=str, required=True,
                         help="Path to the saved model directory")
     parser.add_argument("--device", type=str, default="",
@@ -29,7 +29,7 @@ def parse_args():
     parser.add_argument("--hf_token", type=str, default="",
                         help="Hugging Face access token (optional)")
 
-    # 데이터 관련
+    # Data settings
     parser.add_argument("--input_json_file", type=str, required=True,
                         help="Path to input JSON file for evaluation")
     parser.add_argument("--output_json_file", type=str, required=True,
@@ -40,7 +40,7 @@ def parse_args():
                         choices=["yes", "no"], default="yes",
                         help="Include the options in the question text")
 
-    # RAG 사용 여부
+    # RAG settings
     parser.add_argument("--use_rag", type=str,
                         choices=["yes", "no"], default="yes",
                         help="'yes': use related_docs / 'no': base PRM only")
@@ -58,11 +58,11 @@ def parse_args():
 
 
 # ----------------------------------------------------------------------
-# 2. 유틸 함수
+# 2. Utility functions
 # ----------------------------------------------------------------------
 def format_question_with_options(item):
     """
-    "질문 본문 (A) 옵션1 (B) 옵션2..." 형태로 구성
+    Build text in the form ``question (A) option 1 (B) option 2 ...``.
     """
     q = item.get("question", "")
     opts = item.get("options", [])
@@ -76,7 +76,7 @@ def truncate_related_docs(docs, tokenizer,
                           max_total_len: int,
                           reserve_for_q_and_sol: int = 1024):
     """
-    관련 문서를 토큰 수 한도 내로 자르는 함수 (RAG 모드 전용)
+    Truncate related documents to the token budget for RAG mode.
     """
     kept, used = [], 0
     budget = max_total_len - reserve_for_q_and_sol
@@ -90,7 +90,7 @@ def truncate_related_docs(docs, tokenizer,
 
 
 # ----------------------------------------------------------------------
-# 3. 메인 로직
+# 3. Main logic
 # ----------------------------------------------------------------------
 def main():
     args = parse_args()
@@ -104,7 +104,7 @@ def main():
     print(f"ORM 사용: {args.use_orm}")
     print("=====================")
 
-    if not raw_src_arg:              # None 이거나 "" → 전체 사용
+    if not raw_src_arg:              # Use all sources for None or an empty string.
         filter_sources = []
     else:
         try:
@@ -119,7 +119,7 @@ def main():
 
     os.environ["CUDA_VISIBLE_DEVICES"] = args.device
 
-    # 모델·토크나이저 로드
+    # Load the model and tokenizer.
     print("🔄 모델 로드 중...")
     model = AutoModelForCausalLM.from_pretrained(
         args.model_save_path,
@@ -130,14 +130,14 @@ def main():
     tokenizer = AutoTokenizer.from_pretrained(args.model_save_path)
     print(f"✅ 모델 로드 완료: {type(model).__name__}")
 
-    # '+', '-' 토큰 ID
+    # Token IDs for '+' and '-'.
     plus_id = tokenizer(" +", add_special_tokens=False)["input_ids"][0]
     minus_id = tokenizer(" -", add_special_tokens=False)["input_ids"][0]
     print(f"plus_id  : {plus_id} ({tokenizer.convert_ids_to_tokens([plus_id])})")
     print(f"minus_id : {minus_id} ({tokenizer.convert_ids_to_tokens([minus_id])})")
 
     # --------------------------------------------------------------
-    # PRM 점수 계산
+    # Calculate PRM scores.
     # --------------------------------------------------------------
     def get_prob(text, special_char=" ки"):
         encoded = tokenizer(
@@ -172,19 +172,19 @@ def main():
         }
 
     # --------------------------------------------------------------
-    # JSON 처리
+    # Process JSON input.
     # --------------------------------------------------------------
     def process_json_with_prm():
         print("📂 JSON 파일 로드 중...")
         with open(args.input_json_file, encoding="utf-8") as f:
             data = json.load(f)
         
-        if filter_sources:        # 빈 리스트면 무시
+        if filter_sources:        # Ignore an empty filter list.
             data = [d for d in data if d.get("data_source") in filter_sources]
         total = len(data)
         print(f"📋 처리할 데이터 항목 수: {total}")
 
-        # 시스템 프롬프트 (모드별)
+        # Select the system prompt for the active mode.
         RAG_SYSTEM_PROMPT = (
         "You are an evaluator assessing the logicality and validity of the reasoning in each step of the given explanation. "
         "In order to support the evaluation, the relevant documents, the question, and the explanation are provided sequentially. "
@@ -201,23 +201,23 @@ def main():
             "In order to support the evaluation, the question and the explanation are provided. "
             "If the final answer is incorrect or not well-supported, output -. If the final answer is correct and well-supported, output +."
                 )
-        # JSON 처리 함수 안, with tqdm … 바로 위쪽
-        prm_correct = 0          # PRM 방식 정답 개수
-        mv_correct  = 0          # majority voting 정답 개수
+        # Track correctness immediately before the tqdm processing loop.
+        prm_correct = 0          # Number correct using PRM
+        mv_correct  = 0          # Number correct using majority voting
         
         with tqdm(total=total, desc="Processing Questions", unit="q") as pbar:
             for idx, item in enumerate(data):
-                # 질문 문자열
+                # Build the question text.
                 q_text = (format_question_with_options(item)
                           if args.include_options == "yes"
                           else item.get("question", ""))
 
-                # 솔루션 수 제한
+                # Limit the number of solutions.
                 if args.process_solution_num is not None:
                     item["solutions"] = item["solutions"][:args.process_solution_num]
                 sols = item["solutions"]
 
-                # RAG 모드면 문서 전처리
+                # Preprocess documents in RAG mode.
                 if args.use_rag == "yes":
                     docs = truncate_related_docs(
                         item.get("related_docs", []),
@@ -238,7 +238,7 @@ def main():
                         system_prompt = PRM_SYSTEM_PROMPT
                         sol_key = "prm_processed_solution"
 
-                # 솔루션마다 PRM 점수 부여
+                # Assign PRM scores to each solution.
                 for sol_idx, sol in enumerate(sols):
                     sol_text = sol.get(sol_key, "")
                     user_content = f"{doc_block}Question: {q_text}\n\nExplanation: {sol_text}"
@@ -258,31 +258,31 @@ def main():
                     sol["PRM_score_list"] = plus_probs
 
                 # ───────────────────────────────────────────
-                # ★ 2-1. PRM 기반 정답 여부
+                # 2-1. Determine correctness using PRM.
                 # ───────────────────────────────────────────
                 valid = [s for s in sols if s["PRM_min_score"] != float("-inf")]
                 prm_pred = max(valid, key=lambda s: s["PRM_min_score"]) if valid else None
-                if prm_pred and prm_pred.get("score", 0) == 1:   # score==1 → 정답
+                if prm_pred and prm_pred.get("score", 0) == 1:   # score == 1 means correct.
                     prm_correct += 1
 
                 # ───────────────────────────────────────────
-                # ★ 2-2. Majority voting 기반 정답 여부
-                #     - 답변 문자열이 가장 많이 나온 answer 선택
-                #     - 그 answer 중 score==1 이 하나라도 있으면 정답 처리
+                # 2-2. Determine correctness using majority voting.
+                #      - Select the most frequent answer string.
+                #      - Mark it correct if any matching solution has score == 1.
                 # ───────────────────────────────────────────
                 
-                if sols:                                          # 솔루션이 있을 때만
+                if sols:                                          # Only when solutions are available.
                     most_common_ans, _ = Counter(s["answer"] for s in sols).most_common(1)[0]
                     mv_sols = [s for s in sols if s["answer"] == most_common_ans]
                     if any(s.get("score", 0) == 1 for s in mv_sols):
                         mv_correct += 1
 
-                # 각 문제마다 정답률 계산 및 출력
+                # Calculate and display accuracy after each question.
                 current_prm_acc = (prm_correct / (idx + 1)) * 100
                 current_mv_acc = (mv_correct / (idx + 1)) * 100
                 
                 
-                # 진행률 표시 (더 자세한 정보 포함)
+                # Display detailed progress information.
                 pbar.set_description(f"Q{idx+1}/{total}")
                 pbar.set_postfix(
                     PRM=f"{prm_correct}/{idx+1} ({current_prm_acc:.1f}%)",
@@ -297,7 +297,7 @@ def main():
         print(f"\n✅ Done. Results saved to {args.output_json_file}")
         print(f"PRM Accuracy : {prm_correct}/{total} ({100*prm_correct/total:.2f}%)")
         print(f"Maj-Vote Acc : {mv_correct}/{total} ({100*mv_correct/total:.2f}%)")
-    # 실행
+    # Run evaluation.
     process_json_with_prm()
 
 if __name__ == "__main__":

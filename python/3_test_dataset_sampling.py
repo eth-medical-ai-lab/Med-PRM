@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-vLLM-based multi-question generation + PRM/ORM 후처리
- - 선택형 데이터(예: med_qa, medmc_qa …)와
-   주관식 데이터(예: nejm, osce) 를 한 파이프라인에서 처리
- - 최종 JSON 구조 예시는 README 하단 참조
+vLLM-based multi-question generation with PRM/ORM post-processing.
+ - Process multiple-choice sources (for example, med_qa and medmc_qa) and
+   open-ended sources (for example, nejm and osce) in one pipeline.
+ - See the bottom of the README for an example of the final JSON structure.
 """
 import argparse
 import os
@@ -19,13 +19,13 @@ from huggingface_hub import login
 from vllm import LLM, SamplingParams
 
 # ──────────────────────────────────────────────────────────────
-# 0. 상수
+# 0. Constants
 # ──────────────────────────────────────────────────────────────
 MULTIPLE_CHOICE_SOURCES = {"med_qa", "medmc_qa", "ddxplus", "mmlu_anatomy", 
                           "mmlu_clinical_knowledge", "mmlu_college_biology", 
                           "mmlu_college_medicine", "mmlu_medical_genetics", 
                           "mmlu_professional_medicine", "pubmed_qa"}            
-OPEN_SOURCES           = {"nejm", "osce"}                   # 주관식
+OPEN_SOURCES           = {"nejm", "osce"}                   # Open-ended sources
 
 SYSTEM_PROMPT = (
     "Solve the following question step-by-step. "
@@ -39,7 +39,7 @@ OPEN_SYSTEM_PROMPT = (
 )
 
 # ──────────────────────────────────────────────────────────────
-# 1. 인자 파서
+# 1. Argument parser
 # ──────────────────────────────────────────────────────────────
 def parse_args():
     p = argparse.ArgumentParser(description="vLLM chatting 기반 문제 풀이 생성")
@@ -56,45 +56,45 @@ def parse_args():
     return p.parse_args()
 
 # ──────────────────────────────────────────────────────────────
-# 2-A. 전처리 (문제 텍스트 조립)
+# 2-A. Preprocessing (assemble question text)
 # ──────────────────────────────────────────────────────────────
 def format_question(qdata):
     ds       = qdata["data_source"].lower()
     qid      = qdata["question_id"]
     question = qdata["question"].strip()
-    orig_ans = qdata["correct_answer"].strip()              # <<< 변경: 원본 correct_answer 보존
-    opts     = qdata.get("options", [])                     # <<< 변경: 원본 options 보존
-    related_docs = qdata.get("related_docs", [])            # <<< 추가: related_docs 필드 가져오기
+    orig_ans = qdata["correct_answer"].strip()              # Preserve the original correct_answer.
+    opts     = qdata.get("options", [])                     # Preserve the original options.
+    related_docs = qdata.get("related_docs", [])            # Read the related_docs field.
 
     if ds in MULTIPLE_CHOICE_SOURCES and opts:
-        # 옵션에 (A),(B)... 라벨 붙이기
+        # Prefix options with (A), (B), and so on.
         labels = [f"({c})" for c in string.ascii_uppercase[:len(opts)]]
         opts_text = "\n".join(f"{lab} {opt}" for lab, opt in zip(labels, opts))
         full_q = f"{question}\n\n{opts_text}"
-        gt     = orig_ans.upper()                             # <<< 변경: MC 정답 알파벳
+        gt     = orig_ans.upper()                             # Multiple-choice answer letter
     else:
-        # 주관식은 질문만
+        # Open-ended inputs contain only the question.
         full_q = question
-        gt     = orig_ans                                   # <<< 변경: open 정답 텍스트 그대로
+        gt     = orig_ans                                   # Preserve the open-ended answer text.
 
     return {
         "question_id":          qid,
-        "data_source":          ds,                         # <<< 변경: data_source 보존
+        "data_source":          ds,                         # Preserve data_source.
         "question":             full_q,
-        "options":              opts,                       # <<< 변경: options 리스트 보존
-        "correct_answer":       orig_ans,                   # <<< 변경: 원본 correct_answer 보존
-        "ground_truth_for_eval":gt,                         # <<< 변경: 평가용 정답 구분 저장
-        "related_docs":         related_docs                # <<< 추가: related_docs 필드 보존
+        "options":              opts,                       # Preserve the options list.
+        "correct_answer":       orig_ans,                   # Preserve the original correct_answer.
+        "ground_truth_for_eval":gt,                         # Store the evaluation ground truth separately.
+        "related_docs":         related_docs                # Preserve related_docs.
     }
 
 
 # ──────────────────────────────────────────────────────────────
-# 2-B. LLM 응답 후처리 함수들
+# 2-B. LLM response post-processing helpers
 # ──────────────────────────────────────────────────────────────
 STEP_PATTERN = r'(?:## )?Step \d+:'
 
 def extract_steps_from_text(txt: str):
-    """## Step n: … 구간별 슬라이스"""
+    """Split text into sections beginning with ``## Step n:``."""
     mts = list(re.finditer(STEP_PATTERN, txt))
     if not mts:
         return [txt.strip()] if txt.strip() else []
@@ -105,7 +105,7 @@ def extract_steps_from_text(txt: str):
         steps.append(txt[start:end].strip().replace("## ", ""))
     return steps
 
-# ① 선택형 정답 추출
+# Extract a multiple-choice answer.
 def extract_answer_from_text(txt: str):
     txt = txt.lower()
 
@@ -122,7 +122,7 @@ def extract_answer_from_text(txt: str):
         return m_list[-1].group(1).upper()
     return None
 
-# ② 주관식 정답 추출
+# Extract an open-ended answer.
 def open_extract_answer_from_text(txt: str):
     ptns = [
         r"## Final Diagnosis:\s*(.*?)(?:\n|$)",
@@ -136,7 +136,7 @@ def open_extract_answer_from_text(txt: str):
     return ""
 
 # ──────────────────────────────────────────────────────────────
-# 2-C. PRM/ORM 변환
+# 2-C. PRM/ORM conversion
 # ──────────────────────────────────────────────────────────────
 def prm_process_solution(txt: str):
     no_nl = txt.replace("\n", " ")
@@ -157,14 +157,14 @@ def orm_process_solution(txt: str):
     return txt.replace("\n", " ") + " ки"
 
 # ──────────────────────────────────────────────────────────────
-# 3. JSON 입출력 유틸
+# 3. JSON input/output helpers
 # ──────────────────────────────────────────────────────────────
 def load_json(path):   return json.load(open(path,  encoding="utf-8"))
 def save_json(obj, p): json.dump(obj, open(p, "w", encoding="utf-8"),
                                  ensure_ascii=False, indent=2)
 
 # ──────────────────────────────────────────────────────────────
-# 4-A. 프롬프트 수집
+# 4-A. Prompt collection
 # ──────────────────────────────────────────────────────────────
 def collect_prompts(qdatas, n_samples):
     convs, meta = [], []
@@ -184,7 +184,7 @@ def collect_prompts(qdatas, n_samples):
     return convs, meta
 
 # ──────────────────────────────────────────────────────────────
-# 4-B. vLLM 실행 헬퍼
+# 4-B. vLLM execution helper
 # ──────────────────────────────────────────────────────────────
 def llm_chat(llm, samp_params, convs, meta):
     outs = llm.chat(convs, samp_params)
@@ -195,12 +195,12 @@ def llm_chat(llm, samp_params, convs, meta):
     return bucket
 
 # ──────────────────────────────────────────────────────────────
-# 5. 메인 파이프라인
+# 5. Main pipeline
 # ──────────────────────────────────────────────────────────────
 def generate_all(qdatas, repeat_cnt, llm, samp_params):
     first_cnt = math.ceil(repeat_cnt * 1.25)
 
-    # 1차
+    # First pass
     convs1, meta1 = collect_prompts(qdatas, first_cnt)
     res1 = llm_chat(llm, samp_params, convs1, meta1)
 
@@ -211,7 +211,7 @@ def generate_all(qdatas, repeat_cnt, llm, samp_params):
             if 2 < len(extract_steps_from_text(txt)) < 10:
                 valid[qid].append(txt)
 
-    # 부족분 계산 후 2차
+    # Calculate the shortfall, then run a second pass.
     need2 = [q for q in qdatas if len(valid[q["question_id"]]) < repeat_cnt]
     if need2:
         convs2, meta2 = [], []
@@ -236,7 +236,7 @@ def generate_all(qdatas, repeat_cnt, llm, samp_params):
                 if 2 < len(extract_steps_from_text(txt)) < 10:
                     valid[qid].append(txt)
 
-    # ───────── 최종 JSON 조립 ─────────
+    # ───────── Assemble the final JSON ─────────
     outputs = []
     for q in qdatas:
         qid  = q["question_id"]
@@ -259,16 +259,16 @@ def generate_all(qdatas, repeat_cnt, llm, samp_params):
             })
         outputs.append({
             "question_id":    qid,
-            "data_source":    ds,           # ← 추가
+            "data_source":    ds,
             "question":       q["question"],
             "correct_answer": gt,
             "solutions":      sols,
-            "related_docs":   q["related_docs"],  # ← 수정: related_docs 필드 추가
+            "related_docs":   q["related_docs"],  # Include the related_docs field.
         })
     return outputs
 
 # ──────────────────────────────────────────────────────────────
-# 6. 메인 함수
+# 6. Main function
 # ──────────────────────────────────────────────────────────────
 def main():
     args = parse_args()
@@ -293,14 +293,14 @@ def main():
     raw = load_json(args.input_file)
     print(f"📂 로드: {len(raw)} 문제")
 
-    # 특정 데이터 소스만 처리
+    # Process only the requested data sources.
     data_source_tag = "all"
     if args.data_source_list:
         data_sources = [ds.strip() for ds in args.data_source_list.split(',')]
         filtered_raw = [q for q in raw if q["data_source"].lower() in data_sources]
         print(f"🔍 필터링: {len(filtered_raw)}/{len(raw)} 문제 (데이터 소스: {', '.join(data_sources)})")
         raw = filtered_raw
-        data_source_tag = data_sources[0]  # 첫 번째 데이터 소스만 파일명에 사용
+        data_source_tag = data_sources[0]  # Use only the first data source in the filename.
 
     transformed = [format_question(q) for q in raw]
 
@@ -308,10 +308,10 @@ def main():
 
     os.makedirs(args.output_dir, exist_ok=True)
     
-    # 모델명 추출 (경로에서 마지막 부분만)
+    # Extract the model name from the final path component.
     model_name = os.path.basename(args.model_path.rstrip('/'))
     
-    # 파일명 동적 생성
+    # Build the output filename dynamically.
     base = os.path.splitext(os.path.basename(args.input_file))[0]
     out_path = os.path.join(args.output_dir, f"{base}_{model_name}_{data_source_tag}_{args.repeat_count}.json")
     save_json(dataset, out_path)

@@ -5,7 +5,7 @@ import json
 from huggingface_hub import snapshot_download
 
 def download_and_inspect(repo_id: str, repo_type: str, base_dir: str):
-    # repo_id 마지막 부분을 폴더명으로 사용
+    # Use the final component of repo_id as the directory name.
     name = repo_id.split("/")[-1]
     local_dir = os.path.join(base_dir, name)
     os.makedirs(local_dir, exist_ok=True)
@@ -19,7 +19,7 @@ def download_and_inspect(repo_id: str, repo_type: str, base_dir: str):
     files = sorted(os.listdir(local_dir))
     print("  • Files in", name, ":", files)
 
-    # JSON 검사 (dataset일 경우)
+    # Inspect JSON files for dataset repositories.
     for fname in files:
         if not fname.endswith(".json") or fname.endswith(".index.json"):
             continue
@@ -32,7 +32,7 @@ def download_and_inspect(repo_id: str, repo_type: str, base_dir: str):
                 print(f"    – Failed to load JSON from {fname}: {e}")
                 break
 
-        # 데이터가 list인지 dict인지 구분
+        # Distinguish between list and dictionary structures.
         if isinstance(data, list):
             print(f"    – Loaded JSONL/list of length {len(data)}")
             obj = data[0]
@@ -43,7 +43,7 @@ def download_and_inspect(repo_id: str, repo_type: str, base_dir: str):
             print(f"    – Unknown JSON structure in {fname}")
             break
 
-        # 공통으로 첫 레코드(혹은 객체)의 키 보여주기
+        # Show the keys of the first record or object.
         print("    – Keys of first record/object:", list(obj.keys()))
         break
 
@@ -69,4 +69,3 @@ if __name__ == "__main__":
         repo_type="dataset",
         base_dir="dataset/dataset_3_sampled_dataset"
     )
-

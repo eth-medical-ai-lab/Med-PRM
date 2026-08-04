@@ -103,11 +103,11 @@ def extract_steps_from_solution(sol: dict) -> int:
     """Get the number of steps by counting 'ки' occurrences in prm_processed_solution."""
     prm_processed_solution = sol.get('prm_processed_solution', '')
     if prm_processed_solution:
-        # 'ки' 개수를 세어서 단계 수를 결정
+        # Determine the number of steps by counting 'ки' occurrences.
         step_count = prm_processed_solution.count('ки')
         return step_count if step_count > 0 else 1
     
-    # fallback: 기존 방식
+    # Fall back to the previous method.
     if isinstance(sol, dict) and 'PRM_score_list_soft' in sol and sol['PRM_score_list_soft']:
         return len(sol['PRM_score_list_soft'])
     
@@ -118,9 +118,9 @@ def extract_steps_from_solution(sol: dict) -> int:
 
 def parse_gemini_scores(gemini_response: str, expected_steps: int = None) -> list[int]:
     """
-    Gemini 응답에서 ## Step X: Y 형식으로 된 점수들을 파싱해 리스트로 돌려줍니다.
-    expected_steps가 주어졌고, 파싱 결과 길이가 2*expected_steps일 때는
-    처음 expected_steps개만 취합니다.
+    Parse scores in ``## Step X: Y`` format from a Gemini response.
+    If ``expected_steps`` is provided and the result contains twice that many
+    scores, return only the first ``expected_steps`` values.
     """
     pattern = r"^##\s*Step\s+(\d+)\s*:\s*([0-1])"
     lines = gemini_response.splitlines()
@@ -131,7 +131,7 @@ def parse_gemini_scores(gemini_response: str, expected_steps: int = None) -> lis
         if match:
             scores.append(int(match.group(2)))
     
-    # 두 배 길이인 경우 절반만 남기기
+    # Keep the first half when the response contains duplicate scores.
     if expected_steps is not None and len(scores) == 2 * expected_steps:
         scores = scores[:expected_steps]
     
@@ -168,44 +168,44 @@ async def process_solution_async(
     calls the Gemini API, parses the result, and updates the solution dictionary.
     """
     async with semaphore:
-        # orm_label 확인
+        # Check the ORM label.
         is_correct = solution.get("orm_label", 0) == 1
         
         if is_correct:
-            # 정답인 경우: 모든 단계를 1로 설정
+            # For a correct solution, mark every step as correct.
             n_steps = extract_steps_from_solution(solution)
             solution["prm_gemini_label"] = [1] * n_steps
             logging.info(f"Q_ID: {solution.get('question_id', 'N/A')}, Sol_ID: {solution.get('solution_id', 'N/A')} -> Correct solution, all scores set to 1")
         else:
-            # 오답인 경우: Gemini API 호출
+            # For an incorrect solution, ask the Gemini API to score each step.
             n_steps = extract_steps_from_solution(solution)
             sol_text = solution.get("solution", "")  # CHANGED from 'solution_text' to 'solution'
             final_prompt = f"{full_question_prompt}\n\nSolution: {sol_text}"
             
-            # 시스템 인스트럭션 설정 (오답용만)
+            # Set the system instruction used for incorrect solutions.
             system_instruction = get_system_instruction()
             
-            # 모델 생성
+            # Create the model.
             model = setup_gemini_model(api_key, model_name, system_instruction)
             
             response_text = await get_gemini_response_async(model, final_prompt)
             
-            # 점수 파싱 및 저장
+            # Parse and store the scores.
             parsed_scores = parse_gemini_scores(response_text, expected_steps=n_steps)
             
             if not parsed_scores:
                 logging.error(f"Failed to parse scores for Q_ID: {solution.get('question_id', 'N/A')}, Sol_ID: {solution.get('solution_id', 'N/A')}")
                 logging.error(f"Expected {n_steps} steps, but parsing failed. Raw response: {response_text[:200]}...")
-                solution["prm_gemini_label"] = []  # 빈 리스트로 설정
+                solution["prm_gemini_label"] = []  # Store an empty list on failure.
             else:
-                # PRM_score_list_soft와 길이 비교 및 조정
+                # Compare against PRM_score_list_soft and adjust the length.
                 PRM_score_list_soft = solution.get('PRM_score_list_soft', [])
                 if PRM_score_list_soft and len(parsed_scores) == 2 * len(PRM_score_list_soft):
-                    # 2배 길이인 경우 첫 절반만 사용
+                    # If the result is twice as long, use the first half.
                     parsed_scores = parsed_scores[:len(PRM_score_list_soft)]
                     logging.info(f"Q_ID: {solution.get('question_id', 'N/A')}, Sol_ID: {solution.get('solution_id', 'N/A')} - Using first half of parsed scores (2x length)")
                 elif PRM_score_list_soft and len(parsed_scores) != len(PRM_score_list_soft):
-                    # 길이가 다르지만 2배도 아닌 경우 경고
+                    # Warn when the lengths differ by anything other than 2x.
                     logging.warning(f"Q_ID: {solution.get('question_id', 'N/A')}, Sol_ID: {solution.get('solution_id', 'N/A')} - Length mismatch: expected {len(PRM_score_list_soft)}, got {len(parsed_scores)}")
                 
                 solution["prm_gemini_label"] = parsed_scores
@@ -220,18 +220,18 @@ async def main():
     output_dir = args.output_dir
     os.makedirs(output_dir, exist_ok=True)
     
-    # 통합 로그 파일 설정
+    # Configure the combined log file.
     log_file = os.path.join(output_dir, "complete_processing.log")
     
-    # 로깅 설정 - 모든 로그를 하나의 파일에 통합
+    # Configure logging so all messages are written to one file.
     logging.basicConfig(
         level=logging.INFO,
         format='%(asctime)s - %(levelname)s - %(message)s',
         handlers=[
-            logging.FileHandler(log_file, encoding='utf-8', mode='w'),  # 파일 핸들러
-            logging.StreamHandler()  # 콘솔 핸들러
+            logging.FileHandler(log_file, encoding='utf-8', mode='w'),  # File handler
+            logging.StreamHandler()  # Console handler
         ],
-        force=True  # 기존 로거 설정 덮어쓰기
+        force=True  # Override any existing logger configuration.
     )
     
     logging.info("=" * 80)
@@ -256,9 +256,9 @@ async def main():
     
     logging.info(f"Starting processing of {len(all_entries)} questions...")
     
-    # --- 올바른 개선 로직 시작 ---
+    # --- Improved processing logic ---
 
-    # 1. 모든 질문의 모든 솔루션에 대한 task를 하나의 리스트에 전부 생성합니다.
+    # 1. Create one task list containing every solution for every question.
     all_tasks = []
     for question_data in all_entries:
         question_id = question_data.get('question_id', 'unknown')
@@ -279,40 +279,40 @@ async def main():
             
     logging.info(f"Created {len(all_tasks)} tasks for all solutions. Starting concurrent processing...")
     
-    # 2. tqdm으로 전체 진행 상황을 감싸고, asyncio.gather로 모든 task를 한 번에 실행합니다.
-    #    이렇게 하면 semaphore가 전체 task 풀에 대해 동시성을 올바르게 제어합니다.
+    # 2. Track overall progress with tqdm and run all tasks with asyncio.gather.
+    #    This lets the semaphore control concurrency across the complete task pool.
     pbar = async_tqdm(total=len(all_tasks), desc="Processing Solutions")
     
     async def task_wrapper(task, pbar_instance):
         try:
             await task
         except Exception as e:
-            # 에러 로깅은 process_solution_async 내부에서 처리하거나 여기서 추가로 할 수 있습니다.
-            # 이 예제에서는 개별 태스크 실패가 전체를 멈추지 않도록 합니다.
+            # Errors can be logged in process_solution_async or supplemented here.
+            # Keep an individual task failure from stopping the full run.
             logging.error(f"A task failed and was caught in wrapper: {e}")
         finally:
             pbar_instance.update(1)
 
-    # 모든 태스크를 래핑하여 실행
+    # Wrap and run every task.
     await asyncio.gather(*(task_wrapper(task, pbar) for task in all_tasks))
     
     pbar.close()
 
-    # --- 올바른 개선 로직 끝 ---
+    # --- End improved processing logic ---
 
-    # 3. 모든 작업이 끝난 후, 최종 결과 파일을 한 번에 저장합니다.
+    # 3. Save the final output once all processing is complete.
     final_output_path = os.path.join(args.output_dir, "gemini_labeled_complete_all_questions.json")
     logging.info(f"\nSaving final output to: {final_output_path}")
     
     try:
         with open(final_output_path, "w", encoding="utf-8") as f:
-            # all_entries는 이제 모든 prm_gemini_label이 채워진 상태입니다.
+            # all_entries now contains the populated prm_gemini_label values.
             json.dump(all_entries, f, ensure_ascii=False, indent=2)
         logging.info(f"✓ Final output saved successfully")
     except Exception as e:
         logging.error(f"✗ Failed to save final output: {e}")
         
-    # ... (최종 요약 로깅은 동일) ...
+    # Log the final summary.
     successful_solutions = sum(1 for q in all_entries for s in q.get('solutions', []) if 'prm_gemini_label' in s and s['prm_gemini_label'])
     failed_solutions = len(all_tasks) - successful_solutions
     
